@@ -2,7 +2,7 @@ package com.github.xjs.redisclient;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "redclient")
+@ConfigurationProperties(prefix = "spring.redis")
 public class RedisClientProperties {
 
     private boolean enableApplicationKeyPrefix= true;

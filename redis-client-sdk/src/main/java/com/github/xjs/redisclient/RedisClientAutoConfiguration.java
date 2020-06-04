@@ -39,7 +39,7 @@ public class RedisClientAutoConfiguration implements EnvironmentAware, BeanClass
 
     @Bean
     @ConditionalOnMissingBean
-    @ConditionalOnProperty(value="redclient.enableApplicationKeyPrefix", havingValue="true", matchIfMissing = true)
+    @ConditionalOnProperty(value="spring.redis.enableApplicationKeyPrefix", havingValue="true", matchIfMissing = true)
     public ApplicationKeyPrefix applicationKeyPrefix(){
         String appName = environment.getProperty("spring.application.name", String.class);
         if(StringUtils.isEmpty(appName)){
