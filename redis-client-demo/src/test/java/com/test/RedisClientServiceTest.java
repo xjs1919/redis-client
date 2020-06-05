@@ -6,11 +6,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @SpringBootTest
 @RunWith(SpringRunner.class)
@@ -76,6 +80,43 @@ public class RedisClientServiceTest {
         if(!StringUtils.isEmpty(lockValue)){
             boolean unlock = redisService.unLock(UserKey.lock, ""+100, lockValue);
             System.out.println("unlock:" + unlock);
+        }
+    }
+
+    @Test
+    public void testHash(){
+        redisService.hset(UserKey.hkey1, ""+100, "username", "xjs");
+        redisService.hset(UserKey.hkey1, ""+100, "password", new User(100, "hello"));
+        String username = redisService.hget(UserKey.hkey1, ""+100, "username", String.class);
+        User u = redisService.hget(UserKey.hkey1, ""+100, "password", User.class);
+        System.out.println(username);
+        System.out.println(u);
+        int size = redisService.hlen(UserKey.hkey1, ""+100);
+        System.out.println(size);
+        List<String> keys = redisService.hkeys(UserKey.hkey1, ""+100);
+        System.out.println(keys);
+        redisService.hset(UserKey.hkey2, ""+100, "u1", new User(100, "hello"));
+        redisService.hset(UserKey.hkey2, ""+100, "u2", new User(101, "world"));
+        List<User> users = redisService.hvals(UserKey.hkey2, ""+100, User.class);
+        System.out.println(users);
+        Map<String, User> all = redisService.hgetall(UserKey.hkey2, ""+100,User.class);
+        System.out.println(all);
+        redisService.hdelete(UserKey.hkey2, ""+100, "u1", "u2");
+        users = redisService.hvals(UserKey.hkey2, ""+100, User.class);
+        System.out.println(users);
+        System.out.println(redisService.hexists(UserKey.hkey2, ""+100, "u1"));
+        System.out.println(redisService.hexists(UserKey.hkey1, ""+100, "username"));
+        Map<String, Object> map = new HashMap<String, Object>();
+        map.put("100", new User(100, "hello"));
+        map.put("101", new User(101, "world"));
+        redisService.hmset(UserKey.hkey3, ""+100, map);
+        users = redisService.hmget(User.class,UserKey.hkey3, ""+100, "100", "101");
+        System.out.println(users);
+        List<String> scanKeys = redisService.hscanKeys(UserKey.hkey3, ""+100,"1*");
+        System.out.println(scanKeys);
+        Map<String, byte[]> scans = redisService.hscan(UserKey.hkey3, ""+100,"1*");
+        for(Map.Entry<String, byte[]> entry : scans.entrySet()){
+            System.out.println(entry.getKey() + "：" + ((GenericJackson2JsonRedisSerializer) RedisSerializer.json()).deserialize(entry.getValue(), User.class));
         }
     }
 

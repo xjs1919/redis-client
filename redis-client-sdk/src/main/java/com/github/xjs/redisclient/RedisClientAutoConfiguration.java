@@ -30,6 +30,8 @@ public class RedisClientAutoConfiguration implements EnvironmentAware, BeanClass
         RedisTemplate<byte[], byte[]> redisTemplate = new RedisTemplate<>();
         redisTemplate.setKeySerializer(null);
         redisTemplate.setValueSerializer(null);
+        redisTemplate.setHashKeySerializer(null);
+        redisTemplate.setHashValueSerializer(null);
         redisTemplate.setEnableDefaultSerializer(false);
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         redisTemplate.setBeanClassLoader(this.classLoader);
