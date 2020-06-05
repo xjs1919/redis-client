@@ -1,15 +1,19 @@
 # redis-client
-¶Ôspring-boot-starter-data-redisµÄ¼òµ¥·â×°£¬¸üÒ×ÓÚÉÏÊÖÊ¹ÓÃ
+å¯¹spring-boot-starter-data-redisçš„ç®€å•å°è£…ï¼Œæ›´æ˜“äºä¸Šæ‰‹ä½¿ç”¨
 
-## ´æÔÚµÄÀíÓÉ
-- 1.Í³Ò»keyÇ°×º¹ÜÀí£¬¿ÉÒÔ¸økeyÌí¼ÓÓ¦ÓÃ¼¶±ğµÄÇ°×ººÍÀà¼¶±ğµÄÇ°×º
-- 2.Í³Ò»keyÓĞĞ§ÆÚ¹ÜÀí
-- 3.·½±ãvalueµÄĞ´Èë£¬¶ÔÏóÒÔjson¸öÊıĞ´Èë£¬»ù±¾ÀàĞÍ»¹ÊÇ»ù±¾ÀàĞÍ
+## å¾®ä¿¡æ‰«ä¸€æ‰«å…³æ³¨å…¬ä¼—å·ï¼šçˆªå“‡ä¼˜å¤ªå„¿
+![æ‰«ä¸€æ‰«åŠ å…³æ³¨](https://img-blog.csdnimg.cn/20190524100820287.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2dvbGRlbmZpc2gxOTE5,size_16,color_FFFFFF,t_7)
 
-## ½ÓÈë²½Öè
-- 1.ÏÂÔØÔ´Âë
-±¾µØÖ´ĞĞ£ºmvn clean install -DskipTests °²×°ÒÀÀµ
-- 2.Ìí¼ÓÒÀÀµ
+## å­˜åœ¨çš„ç†ç”±
+- 1.ç»Ÿä¸€keyå‰ç¼€ç®¡ç†ï¼Œå¯ä»¥ç»™keyæ·»åŠ åº”ç”¨çº§åˆ«çš„å‰ç¼€å’Œç±»çº§åˆ«çš„å‰ç¼€
+- 2.ç»Ÿä¸€keyæœ‰æ•ˆæœŸç®¡ç†
+- 3.æ–¹ä¾¿valueçš„å†™å…¥ï¼Œå¯¹è±¡ä»¥jsonä¸ªæ•°å†™å…¥ï¼ŒåŸºæœ¬ç±»å‹è¿˜æ˜¯åŸºæœ¬ç±»å‹
+- 4.ä¹‹å‰çš„RedisTemplateå’ŒStringRedisTemplateä¾æ—§ç…§å¸¸ä½¿ç”¨
+
+## æ¥å…¥æ­¥éª¤
+- 1.ä¸‹è½½æºç 
+æœ¬åœ°æ‰§è¡Œï¼šmvn clean install -DskipTests å®‰è£…ä¾èµ–
+- 2.æ·»åŠ ä¾èµ–
 ```xml
 <dependency>
 	<groupId>com.github.xjs</groupId>
@@ -18,7 +22,7 @@
 </dependency>
 ```
 
-- 3.Ìí¼ÓredisµÄÅäÖÃ,¸úÖ®Ç°spring-boot-starter-data-redisµÄÅäÖÃÊÇÒ»ÑùµÄ
+- 3.æ·»åŠ redisçš„é…ç½®,è·Ÿä¹‹å‰spring-boot-starter-data-redisçš„é…ç½®æ˜¯ä¸€æ ·çš„
 ```yml
 spring:
   redis:
@@ -28,9 +32,9 @@ spring:
     name: demo
 ```
 
-- 4.×¢ÈëRedisClientService
+- 4.æ³¨å…¥RedisClientService
 ```java
-//¾Ù¸öÀı×Ó
+//ä¸¾ä¸ªä¾‹å­
 @Autowired
 private RedisClientService redisService;
 @Test
@@ -39,8 +43,8 @@ public void testSetObject(){
 }
 ```
 
-## keyÇ°×º
-- 1.sdkÄ¬ÈÏ¸økeyÌí¼ÓÓ¦ÓÃ¼¶±ğµÄÇ°×º£¬Ä¬ÈÏÊÇspring.application.name
-- 2.¿ÉÒÔ×¢ÈëÊµÏÖÁËApplicationKeyPrefixÕâ¸ö½Ó¿ÚµÄÀà£¬Ìá¹©Ó¦ÓÃ¼¶±ğµÄÇ°×º
-- 3.Èç¹û²Ù×÷Ä³¸ökey²»ÏëÌí¼ÓApplicationKeyPrefix£¬¿ÉÒÔµ÷ÓÃÏà¹ØµÄapiÃ÷È·²»Ê¹ÓÃÓ¦ÓÃÇ°×º
-- 4.Èç¹ûÕû¸öÓ¦ÓÃ¶¼²»ÏëÌí¼ÓApplicationKeyPrefix£¬¿ÉÒÔÉèÖÃspring.redis.enableApplicationKeyPrefix=false£¬Ä¬ÈÏÊÇtrue¡£
+## keyå‰ç¼€
+- 1.sdké»˜è®¤ç»™keyæ·»åŠ åº”ç”¨çº§åˆ«çš„å‰ç¼€ï¼Œé»˜è®¤æ˜¯spring.application.name
+- 2.å¯ä»¥æ³¨å…¥å®ç°äº†ApplicationKeyPrefixè¿™ä¸ªæ¥å£çš„ç±»ï¼Œæä¾›åº”ç”¨çº§åˆ«çš„å‰ç¼€
+- 3.å¦‚æœæ“ä½œæŸä¸ªkeyä¸æƒ³æ·»åŠ ApplicationKeyPrefixï¼Œå¯ä»¥è°ƒç”¨ç›¸å…³çš„apiæ˜ç¡®ä¸ä½¿ç”¨åº”ç”¨å‰ç¼€
+- 4.å¦‚æœæ•´ä¸ªåº”ç”¨éƒ½ä¸æƒ³æ·»åŠ ApplicationKeyPrefixï¼Œå¯ä»¥è®¾ç½®spring.redis.enableApplicationKeyPrefix=falseï¼Œé»˜è®¤æ˜¯trueã€‚
