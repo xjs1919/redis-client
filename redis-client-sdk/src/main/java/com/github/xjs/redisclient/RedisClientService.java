@@ -103,6 +103,77 @@ public class RedisClientService {
         return redisTemplate.hasKey(keyBytes);
     }
 
+    public <T> T getSet(KeyPrefix prefix, String key, T value){
+        return getSet(true, prefix, key, value);
+    }
+
+    public <T> T getSet(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, T value){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        byte[] oldBytes = redisTemplate.boundValueOps(keyBytes).getAndSet(objectToBytes(value));
+        if(oldBytes !=  null && oldBytes.length > 0){
+            return (T)bytesToObject(oldBytes, value.getClass());
+        }
+        return null;
+    }
+
+    public <T> List<T> mget(Class<T> valueClass, KeyPrefix prefix, String... keys){
+        return mget(true, valueClass, prefix, keys);
+    }
+
+    public <T> List<T> mget(boolean enableAppKeyPrefix, Class<T> valueClass, KeyPrefix prefix, String... keys){
+        if(keys == null || keys.length <= 0){
+            return null;
+        }
+        List<byte[]> byteKeys = new ArrayList<>();
+        for(String key : keys){
+            String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+            byteKeys.add(realKey.getBytes(StandardCharsets.UTF_8));
+        }
+        List<byte[]> valueBytes = redisTemplate.opsForValue().multiGet(byteKeys);
+        if(valueBytes == null || valueBytes.size() <= 0){
+            return null;
+        }
+        return valueBytes.stream().map((bytes)->bytesToObject(bytes, valueClass)).collect(Collectors.toList());
+    }
+
+    public void mset(KeyPrefix prefix, KV... kvs){
+        mset(true, prefix, kvs);
+    }
+
+    public void mset(boolean enableAppKeyPrefix, KeyPrefix prefix, KV... kvs){
+        if(kvs == null || kvs.length <= 0){
+            return;
+        }
+        Map<byte[], byte[]> kvMap = new HashMap<byte[], byte[]>();
+        for(KV kv : kvs){
+            String k = kv.getK();
+            Object v = kv.getV();
+            String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), k);
+            kvMap.put(realKey.getBytes(StandardCharsets.UTF_8), objectToBytes(v));
+        }
+        redisTemplate.opsForValue().multiSet(kvMap);
+    }
+
+    public Long incr(KeyPrefix prefix, String key){
+        return incr(true, prefix, key, 1);
+    }
+
+    public Long incr(boolean enableAppKeyPrefix, KeyPrefix prefix, String key){
+        return incr(enableAppKeyPrefix, prefix, key, 1);
+    }
+
+    public Long incr(KeyPrefix prefix, String key, int offset){
+        return incr(true, prefix, key, offset);
+    }
+
+    public Long incr(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, int offset){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        return redisTemplate.boundValueOps(keyBytes).increment(offset);
+    }
+
+    /***************************HASH************************************/
     public void hset(KeyPrefix prefix, String key, String field, Object value){
         hset(true, prefix, key, field, value);
     }
@@ -299,6 +370,14 @@ public class RedisClientService {
         }
         return new ArrayList<>(keys);
     }
+
+    /***************************LIST************************************/
+
+
+
+
+    /***************************SET************************************/
+
 
     public String lock(KeyPrefix prefix, String key, int waitSeconds){
         return lock(true, prefix, key, waitSeconds);

@@ -1,6 +1,7 @@
 package com.test;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.github.xjs.redisclient.KV;
 import com.github.xjs.redisclient.RedisClientService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -71,6 +72,35 @@ public class RedisClientServiceTest {
         for(int i=0; i<bytes.length; i++){
             System.out.println((int)bytes[i]);
         }
+    }
+
+    @Test
+    public void testGetSet(){
+        redisService.set(UserKey.getById, ""+100, "helloworld");
+        String ret = redisService.getSet(UserKey.getById, ""+100, "java");
+        System.out.println("old value:"+ret);
+        String newvalue = redisService.get(UserKey.getById, ""+100, String.class);
+        System.out.println("new value:"+newvalue);
+    }
+
+    @Test
+    public void testMsetMget(){
+        KV[] kvs = new KV[2];
+        kvs[0] = new KV("hello", "world");
+        kvs[1] = new KV("yes", "java");
+        redisService.mset(UserKey.mset,kvs);
+        List<String> values = redisService.mget(String.class, UserKey.mset, "hello", "yes");
+        System.out.println(values);
+    }
+
+    @Test
+    public void testIncr(){
+        Long v = redisService.incr(UserKey.incr, "incr");
+        System.out.println(v);
+        redisService.incr(UserKey.incr, "incr", 10);
+        redisService.incr(UserKey.incr, "incr", -5);
+        int ret = redisService.get(UserKey.incr, "incr", Integer.class);
+        System.out.println(ret);
     }
 
     @Test
