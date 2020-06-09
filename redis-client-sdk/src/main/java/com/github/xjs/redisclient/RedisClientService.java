@@ -41,7 +41,7 @@ public class RedisClientService {
     }
 
     public <T> T get(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Class<T> valueClazz){
-        String realKey =  buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey =  buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         byte[] val = redisTemplate.boundValueOps(keyBytes).get();
         if(val == null){
@@ -64,7 +64,7 @@ public class RedisClientService {
 
     public Boolean set(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Object value, boolean onlyNotExist){
         byte[] val = objectToBytes(value);
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         int expireSeconds = prefix.getExpireSeconds();
         if(expireSeconds <= 0){
@@ -89,7 +89,7 @@ public class RedisClientService {
     }
 
     public void delete(boolean enableAppKeyPrefix, KeyPrefix prefix, String key){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         redisTemplate.delete(keyBytes);
     }
@@ -99,7 +99,7 @@ public class RedisClientService {
     }
 
     public boolean exists(boolean enableAppKeyPrefix, KeyPrefix prefix, String key){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         return redisTemplate.hasKey(keyBytes);
     }
@@ -109,7 +109,7 @@ public class RedisClientService {
     }
 
     public <T> T getSet(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, T value){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         byte[] oldBytes = redisTemplate.boundValueOps(keyBytes).getAndSet(objectToBytes(value));
         if(oldBytes !=  null && oldBytes.length > 0){
@@ -128,7 +128,7 @@ public class RedisClientService {
         }
         List<byte[]> byteKeys = new ArrayList<>();
         for(String key : keys){
-            String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+            String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
             byteKeys.add(realKey.getBytes(StandardCharsets.UTF_8));
         }
         List<byte[]> valueBytes = redisTemplate.opsForValue().multiGet(byteKeys);
@@ -150,7 +150,7 @@ public class RedisClientService {
         for(KV kv : kvs){
             String k = kv.getK();
             Object v = kv.getV();
-            String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), k);
+            String realKey = buildRealKey(enableAppKeyPrefix, prefix, k);
             kvMap.put(realKey.getBytes(StandardCharsets.UTF_8), objectToBytes(v));
         }
         redisTemplate.opsForValue().multiSet(kvMap);
@@ -169,7 +169,7 @@ public class RedisClientService {
     }
 
     public Long incr(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, int offset){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         return redisTemplate.boundValueOps(keyBytes).increment(offset);
     }
@@ -180,7 +180,7 @@ public class RedisClientService {
     }
 
     public void hset(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, String field, Object value){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         byte[] fieldBytes = field.getBytes(StandardCharsets.UTF_8);
         byte[] valueBytes = objectToBytes(value);
@@ -196,7 +196,7 @@ public class RedisClientService {
     }
 
     public <T> T hget(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, String field, Class<T> valueClass){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         byte[] fieldBytes = field.getBytes(StandardCharsets.UTF_8);
         byte[] valueBytes = (byte[])redisTemplate.boundHashOps(keyBytes).get(fieldBytes);
@@ -204,7 +204,7 @@ public class RedisClientService {
     }
 
     public List<String> hkeys(boolean enableAppKeyPrefix, KeyPrefix prefix, String key){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         Set<Object> keys = redisTemplate.boundHashOps(keyBytes).keys();
         if(keys == null || keys.size() <= 0){
@@ -218,7 +218,7 @@ public class RedisClientService {
     }
 
     public <T> List<T> hvals(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Class<T> valueClass){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         List<Object> values = redisTemplate.boundHashOps(keyBytes).values();
         if(values == null || values.size() <= 0){
@@ -232,7 +232,7 @@ public class RedisClientService {
     }
 
     public int hlen(boolean enableAppKeyPrefix, KeyPrefix prefix, String key){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         Long size = redisTemplate.boundHashOps(keyBytes).size();
         return size==null?0:size.intValue();
@@ -246,7 +246,7 @@ public class RedisClientService {
         if(fields == null || fields.length <= 0){
             return;
         }
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         Object[] fieldBytes = new Object[fields.length];
         for(int i=0; i<fields.length; i++){
@@ -261,7 +261,7 @@ public class RedisClientService {
     }
 
     public Boolean hexists(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, String field){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         return redisTemplate.boundHashOps(keyBytes).hasKey(field.getBytes(StandardCharsets.UTF_8));
     }
@@ -290,7 +290,7 @@ public class RedisClientService {
     }
 
     public <T> List<T> hmget(boolean enableAppKeyPrefix, Class<T> valueClass,KeyPrefix prefix, String key, String ...fields){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         if(fields == null || fields.length <= 0){
             return null;
@@ -311,7 +311,7 @@ public class RedisClientService {
     }
 
     public void hmset(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Map<String, Object> fieldValues){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         if(fieldValues == null || fieldValues.size() <= 0){
             return;
@@ -331,7 +331,7 @@ public class RedisClientService {
 
     public Map<String, byte[]> hscan(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, String pattern){
         Map<String, byte[]> ret = new HashMap<>();
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         ScanOptions options = ScanOptions.scanOptions().count(10).match(pattern).build();
         Cursor<Map.Entry<Object, Object>> cursor = redisTemplate.boundHashOps(keyBytes).scan(options);
@@ -354,7 +354,7 @@ public class RedisClientService {
     }
 
     public List<String> hscanKeys(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, String pattern){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         ScanOptions options = ScanOptions.scanOptions().count(10).match(pattern).build();
         Set<String> keys = new HashSet<>();
@@ -378,7 +378,7 @@ public class RedisClientService {
     }
 
     public Long lpush(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Object... values){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         if(values == null || values.length <= 0){
             return null;
@@ -394,7 +394,7 @@ public class RedisClientService {
         return lpushx(true, prefix,key,value);
     }
     public Long lpushx(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Object value){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         return redisTemplate.boundListOps(keyBytes).leftPushIfPresent(objectToBytes(value));
     }
@@ -404,7 +404,7 @@ public class RedisClientService {
     }
 
     public <T> T lpop(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Class<T> valueClass){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         byte[] valueBytes = redisTemplate.boundListOps(keyBytes).leftPop();
         if(valueBytes == null){
@@ -419,7 +419,7 @@ public class RedisClientService {
     }
 
     public void lset(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, int index, Object value){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         redisTemplate.boundListOps(keyBytes).set(index, objectToBytes(value));
     }
@@ -429,7 +429,7 @@ public class RedisClientService {
     }
 
     public <T> T  lindex(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, int index, Class<T> valueClass){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         byte[] valueBytes = redisTemplate.boundListOps(keyBytes).index(index);
         if(valueBytes == null){
@@ -443,7 +443,7 @@ public class RedisClientService {
     }
 
     public int llen(boolean enableAppKeyPrefix, KeyPrefix prefix, String key){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         Long size = redisTemplate.boundListOps(keyBytes).size();
         if(size == null){
@@ -457,7 +457,7 @@ public class RedisClientService {
     }
 
     public <T> List<T> lrange(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, int start, int stop, Class<T> valueClass){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         List<byte[]> valueBytes = redisTemplate.boundListOps(keyBytes).range(start, stop);
         if(CollectionUtils.isEmpty(valueBytes)){
@@ -471,7 +471,7 @@ public class RedisClientService {
     }
 
     public int lrem(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, int count, Object value){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         Long cnt = redisTemplate.boundListOps(keyBytes).remove(count, objectToBytes(value));
         return cnt == null ? 0 : cnt.intValue();
@@ -482,7 +482,7 @@ public class RedisClientService {
     }
 
     public void ltrim(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, int start, int stop){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         redisTemplate.boundListOps(keyBytes).trim(start, stop);
     }
@@ -492,7 +492,7 @@ public class RedisClientService {
     }
 
     public Long rpush(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Object... values){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         if(values == null || values.length <= 0){
             return null;
@@ -508,7 +508,7 @@ public class RedisClientService {
         return rpushx(true, prefix,key,value);
     }
     public Long rpushx(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Object value){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         return redisTemplate.boundListOps(keyBytes).rightPushIfPresent(objectToBytes(value));
     }
@@ -518,7 +518,7 @@ public class RedisClientService {
     }
 
     public <T> T rpop(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Class<T> valueClass){
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
         byte[] valueBytes = redisTemplate.boundListOps(keyBytes).rightPop();
         if(valueBytes == null){
@@ -565,7 +565,7 @@ public class RedisClientService {
     public boolean unLock(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, String oldValue) {
         //调用lua脚本
         String script = "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
-        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
         try {
             List<String> keys = new ArrayList<>();
             keys.add(realKey);
@@ -590,7 +590,7 @@ public class RedisClientService {
         return redisTemplate.execute(new DefaultRedisScript(script, resultType), byteKeys, byteArgs);
     }
 
-    private String buildRealKey(boolean enableAppKeyPrefix, String prefix, String key){
+    private String buildRealKey(boolean enableAppKeyPrefix, KeyPrefix prefix, String key){
         String appKeyPrefix = null;
         if(enableAppKeyPrefix && properties.isEnableApplicationKeyPrefix() && this.applicationKeyPrefix != null){
             appKeyPrefix = this.applicationKeyPrefix.getApplicationKeyPrefix();
@@ -602,7 +602,11 @@ public class RedisClientService {
         }
     }
 
-    private String buildKey(String prefix, String key){
+    private String buildKey(KeyPrefix keyPrefix, String key){
+        if(keyPrefix == null){
+            return key;
+        }
+        String prefix = keyPrefix.getPrefix();
         if(StringUtils.isEmpty(key)){
             if(prefix.endsWith(":")){
                 return prefix.substring(0, prefix.length()-1);
