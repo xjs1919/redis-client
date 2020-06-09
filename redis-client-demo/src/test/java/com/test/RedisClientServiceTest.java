@@ -150,6 +150,25 @@ public class RedisClientServiceTest {
         }
     }
 
+    @Test
+    public void testList(){
+        redisService.lpush(UserKey.list1, "list", new User(1,"xjs"));
+        User u = redisService.lpop(UserKey.list1, "list", User.class);
+        System.out.println(u);
+        Long ret = redisService.lpushx(UserKey.list1, "list", new User(1,"xjs"));
+        System.out.println(ret);
+        redisService.lpush(UserKey.list1, "list", "hello", "world", "java", "redis");
+        redisService.lset(UserKey.list1, "list", 0, "hello-new");
+        String value = redisService.lindex(UserKey.list1, "list", 0, String.class);
+        System.out.println(value);
+        System.out.println(redisService.llen(UserKey.list1, "list"));
+        List<String> list = redisService.lrange(UserKey.list1, "list", 0, 3, String.class);
+        System.out.println(list);
+        int cnt = redisService.lrem(UserKey.list1, "list", 2, new User(1,"xjs"));
+        System.out.println(cnt);
+        redisService.ltrim(UserKey.list1, "list",0,2);
+    }
+
     public static class User{
         private int id;
         private String name;

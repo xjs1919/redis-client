@@ -23,4 +23,6 @@ public class UserKey extends AbstractKey {
     public static UserKey hkey1 = new UserKey("hk1:");
     public static UserKey hkey2 = new UserKey("hk2:");
     public static UserKey hkey3 = new UserKey("hk3:");
+
+    public static UserKey list1 = new UserKey("l1:");
 }

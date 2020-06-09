@@ -13,6 +13,7 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import reactor.util.annotation.Nullable;
 
@@ -372,9 +373,159 @@ public class RedisClientService {
     }
 
     /***************************LIST************************************/
+    public Long lpush(KeyPrefix prefix, String key, Object... values){
+        return lpush(true, prefix, key, values);
+    }
+
+    public Long lpush(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Object... values){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        if(values == null || values.length <= 0){
+            return null;
+        }
+        byte[][] valueBytes = new byte[values.length][];
+        for(int i=0;i<values.length;i++){
+            valueBytes[i] = objectToBytes(values[i]);
+        }
+        return redisTemplate.boundListOps(keyBytes).leftPushAll(valueBytes);
+    }
+
+    public Long lpushx(KeyPrefix prefix, String key, Object value){
+        return lpushx(true, prefix,key,value);
+    }
+    public Long lpushx(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Object value){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        return redisTemplate.boundListOps(keyBytes).leftPushIfPresent(objectToBytes(value));
+    }
+
+    public <T> T lpop(KeyPrefix prefix, String key, Class<T> valueClass){
+        return lpop(true, prefix, key, valueClass);
+    }
+
+    public <T> T lpop(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Class<T> valueClass){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        byte[] valueBytes = redisTemplate.boundListOps(keyBytes).leftPop();
+        if(valueBytes == null){
+            return null;
+        }
+        return bytesToObject(valueBytes, valueClass);
+    }
 
 
+    public void lset(KeyPrefix prefix, String key, int index, Object value){
+        lset(true, prefix, key, index, value);
+    }
 
+    public void lset(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, int index, Object value){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        redisTemplate.boundListOps(keyBytes).set(index, objectToBytes(value));
+    }
+
+    public <T> T lindex(KeyPrefix prefix, String key, int index, Class<T> valueClass){
+        return lindex(true, prefix, key, index, valueClass);
+    }
+
+    public <T> T  lindex(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, int index, Class<T> valueClass){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        byte[] valueBytes = redisTemplate.boundListOps(keyBytes).index(index);
+        if(valueBytes == null){
+          return null;
+        }
+        return bytesToObject(valueBytes, valueClass);
+    }
+
+    public int llen(KeyPrefix prefix, String key){
+        return llen(true, prefix, key);
+    }
+
+    public int llen(boolean enableAppKeyPrefix, KeyPrefix prefix, String key){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        Long size = redisTemplate.boundListOps(keyBytes).size();
+        if(size == null){
+            return 0;
+        }
+        return size.intValue();
+    }
+
+    public <T> List<T> lrange(KeyPrefix prefix, String key, int start, int stop, Class<T> valueClass){
+        return lrange(true, prefix, key, start, stop, valueClass);
+    }
+
+    public <T> List<T> lrange(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, int start, int stop, Class<T> valueClass){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        List<byte[]> valueBytes = redisTemplate.boundListOps(keyBytes).range(start, stop);
+        if(CollectionUtils.isEmpty(valueBytes)){
+            return null;
+        }
+        return valueBytes.stream().map((v)->bytesToObject(v, valueClass)).collect(Collectors.toList());
+    }
+
+    public int lrem(KeyPrefix prefix, String key, int count, Object value){
+        return lrem(true, prefix, key, count, value);
+    }
+
+    public int lrem(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, int count, Object value){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        Long cnt = redisTemplate.boundListOps(keyBytes).remove(count, objectToBytes(value));
+        return cnt == null ? 0 : cnt.intValue();
+    }
+
+    public void ltrim(KeyPrefix prefix, String key, int start, int stop){
+        ltrim(true, prefix, key, start, stop);
+    }
+
+    public void ltrim(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, int start, int stop){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        redisTemplate.boundListOps(keyBytes).trim(start, stop);
+    }
+
+    public Long rpush(KeyPrefix prefix, String key, Object... values){
+        return rpush(true, prefix, key, values);
+    }
+
+    public Long rpush(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Object... values){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        if(values == null || values.length <= 0){
+            return null;
+        }
+        byte[][] valueBytes = new byte[values.length][];
+        for(int i=0;i<values.length;i++){
+            valueBytes[i] = objectToBytes(values[i]);
+        }
+        return redisTemplate.boundListOps(keyBytes).rightPushAll(valueBytes);
+    }
+
+    public Long rpushx(KeyPrefix prefix, String key, Object value){
+        return rpushx(true, prefix,key,value);
+    }
+    public Long rpushx(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Object value){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        return redisTemplate.boundListOps(keyBytes).rightPushIfPresent(objectToBytes(value));
+    }
+
+    public <T> T rpop(KeyPrefix prefix, String key, Class<T> valueClass){
+        return rpop(true, prefix, key, valueClass);
+    }
+
+    public <T> T rpop(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Class<T> valueClass){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix.getPrefix(), key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        byte[] valueBytes = redisTemplate.boundListOps(keyBytes).rightPop();
+        if(valueBytes == null){
+            return null;
+        }
+        return bytesToObject(valueBytes, valueClass);
+    }
 
     /***************************SET************************************/
 
