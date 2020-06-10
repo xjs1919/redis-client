@@ -528,7 +528,139 @@ public class RedisClientService {
     }
 
     /***************************SET************************************/
+    public Long sadd(KeyPrefix prefix, String key, Object... value){
+        return sadd(true, prefix, key, value);
+    }
 
+    public Long sadd(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Object... value){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        if(value == null || value.length <= 0){
+            return null;
+        }
+        byte[][] valuesBytes = new byte[value.length][];
+        for(int i=0; i<value.length; i++){
+            valuesBytes[i] = objectToBytes(value[i]);
+        }
+        return redisTemplate.boundSetOps(keyBytes).add(valuesBytes);
+    }
+
+    public <T> List<T> smembers(KeyPrefix prefix, String key, Class<T> valueClass){
+        return smembers(true, prefix, key, valueClass);
+    }
+
+    public <T> List<T> smembers(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Class<T> valueClass){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        Set<byte[]> members = redisTemplate.boundSetOps(keyBytes).members();
+        if(members == null || members.size() <= 0){
+           return null;
+        }
+        return members.stream().map((v)->bytesToObject(v, valueClass)).collect(Collectors.toList());
+    }
+
+    public int scard(KeyPrefix prefix, String key){
+        return scard(true, prefix, key);
+    }
+
+    public int scard(boolean enableAppKeyPrefix, KeyPrefix prefix, String key){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        Long size = redisTemplate.boundSetOps(keyBytes).size();
+        return size==null?0:size.intValue();
+    }
+
+    public boolean sismember(KeyPrefix prefix, String key, Object value){
+        return sismember(true, prefix, key, value);
+    }
+
+    public boolean sismember(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Object value){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        Boolean ret = redisTemplate.boundSetOps(keyBytes).isMember(objectToBytes(value));
+        return ret==null?false:ret.booleanValue();
+    }
+
+    public <T> T srandmember(KeyPrefix prefix, String key, Class<T> valueClass){
+        return srandmember(true, prefix, key, valueClass);
+    }
+
+    public <T> T srandmember(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Class<T> valueClass){
+        List<T> retList = srandmember(enableAppKeyPrefix, prefix, key, 1, valueClass);
+        if(retList == null || retList.size() <= 0){
+            return null;
+        }
+        return retList.get(0);
+    }
+
+    public <T> List<T> srandmember(KeyPrefix prefix, String key, int count, Class<T> valueClass){
+        return srandmember(true, prefix, key, count, valueClass);
+    }
+
+    public <T> List<T> srandmember(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, int count, Class<T> valueClass){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        Set<byte[]> values = redisTemplate.boundSetOps(keyBytes).distinctRandomMembers(count);
+        if(values == null || values.size() <= 0){
+            return null;
+        }
+        return values.stream().map((v)->bytesToObject(v, valueClass)).collect(Collectors.toList());
+    }
+
+    public Boolean srem(KeyPrefix prefix, String key, Object... values){
+        return srem(true, prefix, key, values);
+    }
+
+    public Boolean srem(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Object... values){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        Long cnt = redisTemplate.boundSetOps(keyBytes).remove(objectsToBytes(values));
+        if(cnt == null){
+            return null;
+        }
+        return cnt.intValue() > 0;
+    }
+
+    public <T> T spop(KeyPrefix prefix, String key, Class<T> valueClass){
+        return spop(true, prefix, key,  valueClass);
+    }
+
+    public <T> T spop(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Class<T> valueClass){
+        List<T> ret = spop(enableAppKeyPrefix, prefix, key, 1, valueClass);
+        if(CollectionUtils.isEmpty(ret)){
+            return null;
+        }
+        return ret.get(0);
+    }
+
+    public <T> List<T> spop(KeyPrefix prefix, String key, int count, Class<T> valueClass){
+        return spop(true, prefix, key, count, valueClass);
+    }
+
+    public <T> List<T> spop(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, int count, Class<T> valueClass){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        List<byte[]> bytes = redisTemplate.opsForSet().pop(keyBytes, count);
+        return bytesToObjects(bytes, valueClass);
+    }
+
+    public <T> Set<T> sscan(KeyPrefix prefix, String key, String pattern, Class<T> valueClass){
+        return sscan(true, prefix, key, pattern, valueClass);
+    }
+
+    public <T> Set<T> sscan(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, String pattern, Class<T> valueClass){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        Set<T> set = new HashSet<T>();
+        ScanOptions options = ScanOptions.scanOptions().count(10).match(pattern).build();
+        Cursor<byte[]> cursor = redisTemplate.boundSetOps(keyBytes).scan(options);
+        while(cursor.hasNext()){
+            byte[] valueBytes = cursor.next();
+            T t = bytesToObject(valueBytes, valueClass);
+            set.add(t);
+        }
+        return set;
+    }
 
     public String lock(KeyPrefix prefix, String key, int waitSeconds){
         return lock(true, prefix, key, waitSeconds);
@@ -617,6 +749,29 @@ public class RedisClientService {
         }else{
             return prefix + ":"+ key;
         }
+    }
+
+    private byte[][] objectsToBytes(Object... values){
+        if(values == null || values.length <= 0){
+            return null;
+        }
+        byte[][] ret = new byte[values.length][];
+        for(int i=0; i<values.length; i++){
+            ret[i] = objectToBytes(values[i]);
+        }
+        return ret;
+    }
+
+    private <T> List<T> bytesToObjects(List<byte[]> val, Class<T> valueClazz){
+        if(val == null || val.size() <= 0){
+            return null;
+        }
+        List<T> ret = new ArrayList<>(val.size());
+        for(int i=0; i<val.size(); i++){
+            byte[] bytes = val.get(i);
+            ret.add(bytesToObject(bytes, valueClazz));
+        }
+        return ret;
     }
 
     private byte[] objectToBytes(Object value){

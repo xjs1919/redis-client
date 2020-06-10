@@ -12,10 +12,7 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @SpringBootTest
 @RunWith(SpringRunner.class)
@@ -167,6 +164,35 @@ public class RedisClientServiceTest {
         int cnt = redisService.lrem(UserKey.list1, "list", 2, new User(1,"xjs"));
         System.out.println(cnt);
         redisService.ltrim(UserKey.list1, "list",0,2);
+    }
+
+    @Test
+    public void testSet(){
+        redisService.sadd(UserKey.set, "set", new User(1,"xjs"));
+        int size = redisService.scard(UserKey.set, "set");
+        System.out.println(size);
+        List<User>  users = redisService.smembers(UserKey.set, "set", User.class);
+        System.out.println(users);
+        User u = redisService.spop(UserKey.set, "set", User.class);
+        System.out.println(u);
+        redisService.sadd(UserKey.set2, "set", "hello", "world", "java", "C++", "php");
+        boolean isMember = redisService.sismember(UserKey.set2, "set", "hello");
+        System.out.println(isMember);
+        List<String> values = redisService.srandmember(UserKey.set2, "set", 2, String.class);
+        System.out.println(values);
+        redisService.srem(UserKey.set2, "set", "hello");
+        values = redisService.smembers(UserKey.set2, "set",  String.class);
+        System.out.println(values);
+        values = redisService.spop(UserKey.set2, "set", 2, String.class);
+        System.out.println(values);
+        values = redisService.smembers(UserKey.set2, "set",  String.class);
+        System.out.println(values);
+        for(int i=0;i<100;i++){
+            redisService.sadd(UserKey.set2, "set", "value"+i);
+        }
+        Set<String> set  = redisService.sscan(UserKey.set2, "set", "value*", String.class);
+        System.out.println(set.size());
+        System.out.println(set);
     }
 
     public static class User{
