@@ -7,8 +7,9 @@
 ## 存在的理由
 - 1.统一key前缀管理，可以给key添加应用级别的前缀和类级别的前缀
 - 2.统一key有效期管理
-- 3.方便value的写入，对象以json个数写入，基本类型还是基本类型
+- 3.方便value的写入，对象以json形式写入，基本类型还是基本类型
 - 4.之前的RedisTemplate和StringRedisTemplate依旧照常使用
+- 5.更方便的分布式锁和发布订阅
 
 ## 接入步骤
 - 1.下载源码
@@ -40,6 +41,20 @@ private RedisClientService redisService;
 @Test
 public void testSetObject(){
 	redisService.set(UserKey.getById, ""+100,  new User(1, "xjs"));
+	User user = redisService.get(UserKey.getById, ""+100,  User.class);
+        System.out.println(user);
+	
+	redisService.set(UserKey.simple, ""+100, 1);
+	Integer i = redisService.get(UserKey.simple, ""+100,  Integer.class);
+        System.out.println(i);
+	
+	List<User> users = new ArrayList<>();
+        users.add(new User(1, "xjs"));
+        users.add(new User(2, "aaa"));
+        redisService.set(UserKey.list, ""+100,  users);
+	TypeReference<List<User>> tf = new TypeReference<List<User>>(){};
+        List<User> users = (List<User>)redisService.get(UserKey.list, ""+100, tf.getClass());
+        System.out.println(users);
 }
 ```
 
