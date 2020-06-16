@@ -6,9 +6,7 @@ import com.github.xjs.redisclient.key.ApplicationKeyPrefix;
 import com.github.xjs.redisclient.key.KeyPrefix;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.redis.core.Cursor;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.ScanOptions;
+import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
@@ -662,6 +660,211 @@ public class RedisClientService {
         return set;
     }
 
+    /***************************SortedSET************************************/
+    public void zadd(KeyPrefix prefix, String key, ZSetOperations.TypedTuple... tuples){
+        zadd(true, prefix, key, tuples);
+    }
+    public void zadd(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, ZSetOperations.TypedTuple... tuples){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        if(tuples == null || tuples.length <= 0){
+            return;
+        }
+        Set<ZSetOperations.TypedTuple<byte[]>> valueBytes = new HashSet<>(tuples.length);
+        for(ZSetOperations.TypedTuple tuple : tuples){
+            ZSetOperations.TypedTuple t = new DefaultTypedTuple(objectToBytes(tuple.getValue()), tuple.getScore());
+            valueBytes.add(t);
+        }
+        redisTemplate.boundZSetOps(keyBytes).add(valueBytes);
+    }
+
+    public <T> Set<T> zrange(KeyPrefix prefix, String key, double minScore, double maxScore, Class<T> valueClazz){
+        return zrange(true, prefix, key, minScore, maxScore, valueClazz);
+    }
+
+    public <T> Set<T> zrange(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, double minScore, double maxScore, Class<T> valueClazz){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        Set<byte[]> valueBytes = redisTemplate.boundZSetOps(keyBytes).rangeByScore(minScore, maxScore);
+        if(valueBytes == null || valueBytes.size() <= 0){
+            return null;
+        }
+        return valueBytes.stream().map((v)->bytesToObject(v, valueClazz)).collect(Collectors.toSet());
+    }
+
+    public <T> Set<ZSetOperations.TypedTuple<T>> zrangeWithScore(KeyPrefix prefix, String key, double minScore, double maxScore, Class<T> valueClazz){
+        return zrangeWithScore(true, prefix, key, minScore, maxScore, valueClazz);
+    }
+
+    public <T> Set<ZSetOperations.TypedTuple<T>> zrangeWithScore(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, double minScore, double maxScore, Class<T> valueClazz){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        Set<ZSetOperations.TypedTuple<byte[]>> valueBytes = redisTemplate.boundZSetOps(keyBytes).rangeByScoreWithScores(minScore, maxScore);
+        if(valueBytes == null || valueBytes.size() <= 0){
+            return null;
+        }
+        Set<ZSetOperations.TypedTuple<T>> ret = new HashSet<>(valueBytes.size());
+        for(ZSetOperations.TypedTuple<byte[]> value : valueBytes){
+            ZSetOperations.TypedTuple<T> tuple = new DefaultTypedTuple<>(bytesToObject(value.getValue(),valueClazz), value.getScore());
+            ret.add(tuple);
+        }
+        return ret;
+    }
+
+    public Long zcard(KeyPrefix prefix, String key){
+        return zcard(true, prefix, key);
+    }
+
+    public Long zcard(boolean enableAppKeyPrefix, KeyPrefix prefix, String key){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        return redisTemplate.boundZSetOps(keyBytes).size();
+    }
+
+    public Long zcount(KeyPrefix prefix, String key, double minScore, double maxScore){
+        return zcount(true, prefix, key, minScore, maxScore);
+    }
+
+    public Long zcount(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, double minScore, double maxScore){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        return redisTemplate.boundZSetOps(keyBytes).count(minScore, maxScore);
+    }
+
+    public Double zincrby(KeyPrefix prefix, String key, String member, double score){
+        return zincrby(true, prefix, key, member, score);
+    }
+    public Double zincrby(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, String member, double score){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        return redisTemplate.boundZSetOps(keyBytes).incrementScore(objectToBytes(member), score);
+    }
+
+    public Long zrank(KeyPrefix prefix, String key, String member){
+        return zrank(true, prefix, key, member);
+    }
+    public Long zrank(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, String member){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        return redisTemplate.boundZSetOps(keyBytes).rank(objectToBytes(member));
+    }
+
+    public Double zscore(KeyPrefix prefix, String key, String member){
+        return zscore(true,prefix,key,member);
+    }
+
+    public Double zscore(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, String member){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        return redisTemplate.boundZSetOps(keyBytes).score(objectToBytes(member));
+    }
+
+    public Long zrem(KeyPrefix prefix, String key, String... members){
+        return zrem(true, prefix, key, members);
+    }
+
+    public Long zrem(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, String... members){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        return redisTemplate.boundZSetOps(keyBytes).remove(objectsToBytes(members));
+    }
+
+    public Long zremByRank(KeyPrefix prefix, String key, int start, int stop){
+        return zremByRank(true, prefix, key, start, stop);
+    }
+
+    public Long zremByRank(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, int start, int stop){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        return redisTemplate.boundZSetOps(keyBytes).removeRange(start, stop);
+    }
+
+    public Long zremByScore(KeyPrefix prefix, String key, double min, double max){
+        return zremByScore(true, prefix, key, min, max);
+    }
+
+    public Long zremByScore(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, double min, double max){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        return redisTemplate.boundZSetOps(keyBytes).removeRangeByScore(min, max);
+    }
+
+    public Long zrevRank(KeyPrefix prefix, String key, String member){
+        return zrevRank(true, prefix, key, member);
+    }
+
+    public Long zrevRank(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, String member){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        return redisTemplate.boundZSetOps(keyBytes).reverseRank(objectToBytes(member));
+    }
+
+    public <T>List<T> zrevRange(KeyPrefix prefix, String key, int start, int stop, Class<T> valueClass){
+        return zrevRange(true, prefix, key, start, stop, valueClass);
+    }
+
+    public <T> List<T> zrevRange(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, int start, int stop, Class<T> valueClass){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        Set<byte[]> values = redisTemplate.boundZSetOps(keyBytes).reverseRange(start, stop);
+        if(values == null || values.size() <= 0){
+            return null;
+        }
+        return bytesToObjects(values, valueClass);
+    }
+
+    public <T> List<T> zrevRangeByScore(KeyPrefix prefix, String key, double min, double max, Class<T> valueClass){
+        return zrevRangeByScore(true, prefix, key, min, max, valueClass);
+    }
+
+    public <T> List<T> zrevRangeByScore(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, double min, double max, Class<T> valueClass){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        Set<byte[]> values=redisTemplate.boundZSetOps(keyBytes).reverseRangeByScore(min,max);
+        if(values == null || values.size() <= 0){
+            return null;
+        }
+        return bytesToObjects(values, valueClass);
+    }
+
+    public <T> List<ZSetOperations.TypedTuple<T>> zrevRangeByScoreWithScore(KeyPrefix prefix, String key, double min, double max, Class<T> valueClass){
+        return zrevRangeByScoreWithScore(true, prefix, key, min, max, valueClass);
+    }
+
+    public <T> List<ZSetOperations.TypedTuple<T>> zrevRangeByScoreWithScore(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, double min, double max, Class<T> valueClass){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        Set<ZSetOperations.TypedTuple<byte[]>> values = redisTemplate.boundZSetOps(keyBytes).reverseRangeByScoreWithScores(min, max);
+        if(values == null || values.size() <= 0){
+            return null;
+        }
+        List<ZSetOperations.TypedTuple<T>> ret = new ArrayList<>(values.size());
+        for(ZSetOperations.TypedTuple<byte[]> value : values){
+            ZSetOperations.TypedTuple<T> tuple = new DefaultTypedTuple<>(bytesToObject(value.getValue(),valueClass), value.getScore());
+            ret.add(tuple);
+        }
+        return ret;
+    }
+
+    public <T> Set<ZSetOperations.TypedTuple<T>> zscan(KeyPrefix prefix, String key, String pattern, Class<T> valueClass){
+        return zscan(true, prefix, key, pattern, valueClass);
+    }
+
+    public <T> Set<ZSetOperations.TypedTuple<T>> zscan(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, String pattern, Class<T> valueClass){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        Set<ZSetOperations.TypedTuple<T>> set = new HashSet<>();
+        ScanOptions options = ScanOptions.scanOptions().count(10).match(pattern).build();
+        Cursor<ZSetOperations.TypedTuple<byte[]>> cursor = redisTemplate.boundZSetOps(keyBytes).scan(options);
+        while(cursor.hasNext()){
+            ZSetOperations.TypedTuple<byte[]> value = cursor.next();
+            byte[] bytes = value.getValue();
+            ZSetOperations.TypedTuple<T> tuple = new DefaultTypedTuple(bytesToObject(bytes, valueClass), value.getScore());
+            set.add(tuple);
+        }
+        return set;
+    }
+
     public String lock(KeyPrefix prefix, String key, int waitSeconds){
         return lock(true, prefix, key, waitSeconds);
     }
@@ -762,13 +965,13 @@ public class RedisClientService {
         return ret;
     }
 
-    private <T> List<T> bytesToObjects(List<byte[]> val, Class<T> valueClazz){
+    private <T> List<T> bytesToObjects(Collection<byte[]> val, Class<T> valueClazz){
         if(val == null || val.size() <= 0){
             return null;
         }
         List<T> ret = new ArrayList<>(val.size());
-        for(int i=0; i<val.size(); i++){
-            byte[] bytes = val.get(i);
+        for(Iterator<byte[]> it = val.iterator(); it.hasNext();){
+            byte[] bytes = it.next();
             ret.add(bytesToObject(bytes, valueClazz));
         }
         return ret;

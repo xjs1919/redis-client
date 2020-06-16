@@ -7,6 +7,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.connection.DefaultStringTuple;
+import org.springframework.data.redis.core.DefaultTypedTuple;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -194,6 +197,49 @@ public class RedisClientServiceTest {
         System.out.println(set.size());
         System.out.println(set);
     }
+
+    @Test
+    public void testZSet(){
+        List<DefaultTypedTuple<String>> tuples = new ArrayList<>();
+        for(int i=0;i<10;i++){
+            DefaultTypedTuple<String> tuple1 = new DefaultTypedTuple("a"+i, 1.0+i);
+            tuples.add(tuple1);
+        }
+        redisService.zadd(UserKey.zset1, "zset", tuples.toArray(new DefaultTypedTuple[0]));
+        Set<String> ret = redisService.zrange(UserKey.zset1, "zset", 1.0, 10.0, String.class);
+        System.out.println(ret);
+        Set<ZSetOperations.TypedTuple<String>> tupleRet = redisService.zrangeWithScore(UserKey.zset1, "zset", 1.0, 10.0, String.class);
+        tupleRet.forEach((typle)->{
+            System.out.println(typle.getValue()+"="+typle.getScore());
+        });
+        Long count = redisService.zcard(UserKey.zset1, "zset");
+        System.out.println("count:"+count);
+        count = redisService.zcount(UserKey.zset1, "zset", 1.0, 5.0);
+        System.out.println("count:"+count);
+        Double afterIncr = redisService.zincrby(UserKey.zset1, "zset", "a0", 10);
+        System.out.println("afterIncr:"+afterIncr);
+        Long zrank = redisService.zrank(UserKey.zset1, "zset", "a0");
+        System.out.println("zrank="+zrank);
+        Double score = redisService.zscore(UserKey.zset1, "zset", "a0");
+        System.out.println("score="+score);
+        zrank = redisService.zrevRank(UserKey.zset1, "zset", "a0");
+        System.out.println("zrank="+zrank);
+        List<String> reverse = redisService.zrevRange(UserKey.zset1, "zset", 0,5, String.class);
+        System.out.println(reverse);
+        reverse = redisService.zrevRangeByScore(UserKey.zset1, "zset", 0,5, String.class);
+        System.out.println(reverse);
+        Set<ZSetOperations.TypedTuple<String>> scans = redisService.zscan(UserKey.zset1, "zset", "*", String.class);
+        for (ZSetOperations.TypedTuple<String> scan : scans) {
+            System.out.println(scan.getValue()+"="+scan.getScore());
+        }
+        redisService.zrem(UserKey.zset1, "zset", "a0");
+        System.out.println(redisService.zrange(UserKey.zset1, "zset", 0, 100, String.class));
+        redisService.zremByRank(UserKey.zset1, "zset", 0, 1);
+        System.out.println(redisService.zrange(UserKey.zset1, "zset", 0, 100, String.class));
+        redisService.zremByScore(UserKey.zset1, "zset", 5.0, 100.0);
+        System.out.println(redisService.zrange(UserKey.zset1, "zset", 0, 100, String.class));
+    }
+
 
     public static class User{
         private int id;
