@@ -2,19 +2,24 @@ package com.test;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.xjs.redisclient.KV;
+import com.github.xjs.redisclient.OnRedisMessageEvent;
 import com.github.xjs.redisclient.RedisClientService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.redis.connection.DefaultStringTuple;
 import org.springframework.data.redis.core.DefaultTypedTuple;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.StringUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @SpringBootTest
@@ -240,6 +245,20 @@ public class RedisClientServiceTest {
         System.out.println(redisService.zrange(UserKey.zset1, "zset", 0, 100, String.class));
     }
 
+    @EventListener
+    public void event(OnRedisMessageEvent event){
+        System.out.println(event.getChannel()+","+event.getValue());
+    }
+
+    @Test
+    public void testPubSub(){
+        redisService.publish(false,null, "demo:hello", new User(1, "xjs"));
+        try{
+            Thread.sleep(1000);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
 
     public static class User{
         private int id;

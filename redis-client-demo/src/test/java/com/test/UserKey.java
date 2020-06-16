@@ -27,4 +27,5 @@ public class UserKey extends AbstractKey {
     public static UserKey set = new UserKey("s1:");
     public static UserKey set2 = new UserKey("s2:");
     public static UserKey zset1 = new UserKey("zs1:");
+    public static UserKey pubsub = new UserKey("ps:");
 }

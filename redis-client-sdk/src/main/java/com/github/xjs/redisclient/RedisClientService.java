@@ -864,7 +864,20 @@ public class RedisClientService {
         }
         return set;
     }
+    /***************************pub/sub************************************/
+    public void publish(KeyPrefix prefix, String key, Object value){
+        publish(true, prefix, key, value);
+    }
+    public void publish(boolean enableAppKeyPrefix, KeyPrefix prefix, String key, Object value){
+        String realKey = buildRealKey(enableAppKeyPrefix, prefix, key);
+        byte[] keyBytes = realKey.getBytes(StandardCharsets.UTF_8);
+        redisTemplate.execute(connection -> {
+            connection.publish(keyBytes, objectToBytes(value));
+            return null;
+        }, true);
+    }
 
+    /***************************lock/unlock************************************/
     public String lock(KeyPrefix prefix, String key, int waitSeconds){
         return lock(true, prefix, key, waitSeconds);
     }
