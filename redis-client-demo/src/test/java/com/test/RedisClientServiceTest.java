@@ -245,10 +245,10 @@ public class RedisClientServiceTest {
         System.out.println(redisService.zrange(UserKey.zset1, "zset", 0, 100, String.class));
     }
 
-    @EventListener
-    public void event(OnRedisMessageEvent event){
-        System.out.println(event.getChannel()+","+event.getValue());
-    }
+//    @EventListener
+//    public void event(OnRedisMessageEvent event){
+//        System.out.println(event.getChannel()+","+event.getValue());
+//    }
 
     @Test
     public void testPubSub(){
